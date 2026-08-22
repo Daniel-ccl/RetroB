@@ -16,7 +16,6 @@ void EfectosManager::CargarShader() {
     locs.progreso  = GetShaderLocation(shaderSpark, "progreso");
     locs.pixelSize = GetShaderLocation(shaderSpark, "pixelSize");
     locs.modo = GetShaderLocation(shaderSpark, "modo"); 
-    shaderSpark.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shaderSpark, "matModel");
 
     Mesh quad = GenMeshPlane(1.0f, 1.0f, 1, 1);
     modeloQuad = LoadModelFromMesh(quad);
