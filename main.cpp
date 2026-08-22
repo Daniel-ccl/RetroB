@@ -20,7 +20,7 @@
 #include <memory>
 #include <cstdlib>
 
-enum GameState { MENU, FREE_ROOM, LEVELS, EDITOR, PAUSA };
+enum GameState { MENU, FREE_ROOM, LEVELS, LEVEL_SELECT, EDITOR, PAUSA };
 
 struct BotonesPausa {
     Rectangle resume, restart, mainMenu, quit;
@@ -126,6 +126,20 @@ int main() {
     bool nivelCargado      = false;
     bool nivelCompletado   = false;
 
+    std::string rutaNivelActual = "";
+    std::vector<std::string> nivelesDisponibles;
+
+    auto EscanearNiveles = [&]() {
+        nivelesDisponibles.clear();
+        FilePathList archivos = LoadDirectoryFiles("Levels_editor/levels");
+        for (unsigned int i = 0; i < archivos.count; i++) {
+            if (IsFileExtension(archivos.paths[i], ".lvl")) {
+                nivelesDisponibles.push_back(archivos.paths[i]);
+            }
+        }
+        UnloadDirectoryFiles(archivos);
+    };
+
     auto CargarNivel = [&](const std::string& ruta) {
         if (!LevelIO::Cargar(ruta, nivelActual)) return;
 
@@ -171,7 +185,10 @@ int main() {
         if (currentState == MENU) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 if (CheckCollisionPointRec(mousePos, {500, 200, 280, 50})) currentState = FREE_ROOM;
-                if (CheckCollisionPointRec(mousePos, {500, 300, 280, 50})) currentState = LEVELS;
+                if (CheckCollisionPointRec(mousePos, {500, 300, 280, 50})) {
+                    EscanearNiveles();
+                    currentState = LEVEL_SELECT;
+                }
                 if (CheckCollisionPointRec(mousePos, {500, 400, 280, 50})) currentState = EDITOR;
                 if (CheckCollisionPointRec(mousePos, {500, 500, 280, 50})) break; 
             }
@@ -216,8 +233,24 @@ int main() {
             }
         }
 
+        else if (currentState == LEVEL_SELECT) {
+            if (IsKeyPressed(KEY_ESCAPE)) currentState = MENU;
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                for (int i = 0; i < (int)nivelesDisponibles.size(); i++) {
+                    Rectangle r = { 400.0f, 180.0f + i * 60.0f, 480.0f, 50.0f };
+                    if (CheckCollisionPointRec(mousePos, r)) {
+                        rutaNivelActual = nivelesDisponibles[i];
+                        nivelCargado = false;
+                        currentState = LEVELS;
+                        break;
+                    }
+                }
+            }
+        }
+
         else if (currentState == LEVELS) {
-            if (!nivelCargado) CargarNivel("levels/nivel_01.lvl");
+            if (!nivelCargado) CargarNivel(rutaNivelActual);
 
             if (IsKeyPressed(KEY_ESCAPE)) { estadoAntesDePausa = LEVELS; currentState = PAUSA; }
 
@@ -375,7 +408,8 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        bool dibujarComo_MENU      = (currentState == MENU);
+        bool dibujarComo_MENU         = (currentState == MENU);
+        bool dibujarComo_LEVEL_SELECT = (currentState == LEVEL_SELECT);
         bool dibujarComo_LEVELS    = (currentState == LEVELS)    || (currentState == PAUSA && estadoAntesDePausa == LEVELS);
         bool dibujarComo_EDITOR    = (currentState == EDITOR)    || (currentState == PAUSA && estadoAntesDePausa == EDITOR);
         bool dibujarComo_FREE_ROOM = (currentState == FREE_ROOM) || (currentState == PAUSA && estadoAntesDePausa == FREE_ROOM);
@@ -386,6 +420,23 @@ int main() {
             DrawRectangle(500, 300, 280, 50, DARKGRAY); DrawText("LEVELS",    580, 315, 20, WHITE);
             DrawRectangle(500, 400, 280, 50, DARKGRAY); DrawText("EDITOR",    580, 415, 20, WHITE);
             DrawRectangle(500, 500, 280, 50, DARKGRAY); DrawText("EXIT",      600, 515, 20, WHITE);
+        }
+        else if (dibujarComo_LEVEL_SELECT) {
+            DrawText("SELECCIONA UN NIVEL", 400, 100, 30, SKYBLUE);
+
+            if (nivelesDisponibles.empty()) {
+                DrawText("no hay niveles guardados todavia", 400, 200, 20, LIGHTGRAY);
+                DrawText("usa el Editor para crear uno en Levels_editor/levels/", 400, 230, 16, GRAY);
+            } else {
+                for (int i = 0; i < (int)nivelesDisponibles.size(); i++) {
+                    Rectangle r = { 400.0f, 180.0f + i * 60.0f, 480.0f, 50.0f };
+                    DrawRectangleRec(r, DARKGRAY);
+                    DrawRectangleLinesEx(r, 1.0f, SKYBLUE);
+                    DrawText(nivelesDisponibles[i].c_str(), r.x + 20, r.y + 15, 18, WHITE);
+                }
+            }
+
+            DrawText("[ESC] volver", 400, 650, 16, LIGHTGRAY);
         }
         else if (dibujarComo_LEVELS) {
             if (nivelCargado) {

@@ -1,3 +1,10 @@
-RetroB
+/RetroB
+/Levels_editor/Editor
+
 *.o
 *.out
+*.a
+*.so
+
+/build/
+/Levels_editor/build/
