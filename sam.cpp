@@ -1,5 +1,6 @@
 #include "sam.h"
 #include "raymath.h"
+#include "efectos/efectos_manager.h"
 #include <cmath>
 #include <algorithm>
 
@@ -84,6 +85,8 @@ void Sam::DispararMisiles(Vector3 posAvion) {
         misiles.push_back(Proyectil(posicionOjo, objetivoFicticio, misilVelocidad,
                                      /*homing=*/true, (Color){255, 60, 30, 255}, MISIL_ALCANCE_MAX, radioImpacto,
                                      MISIL_TAMANO, MISIL_TIEMPO_ERRANTE, MISIL_TIEMPO_RECTO));
+
+        EfectosManager::Instancia().EmitirLanzamiento(posicionOjo, dirRotada, (Color){255, 60, 30, 255});
     }
 }
 
@@ -91,7 +94,10 @@ bool Sam::ActualizarMisiles(float dt, Vector3 posAvion) {
     bool impactoEsteFrame = false;
 
     for (auto& m : misiles) {
-        if (m.Actualizar(dt, posAvion)) impactoEsteFrame = true;
+	    if (m.Actualizar(dt, posAvion)) impactoEsteFrame = true;
+	    if (m.EstaActivo() && m.ListoParaEstela(dt)) {
+		    EfectosManager::Instancia().EmitirEstela(m.GetPosicion(), m.GetDireccion(), (Color){255, 60, 30, 255});
+	    }
     }
 
     misiles.erase(std::remove_if(misiles.begin(), misiles.end(),

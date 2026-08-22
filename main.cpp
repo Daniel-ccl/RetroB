@@ -16,6 +16,7 @@
 #include "enemy.h"
 #include "level_data.h"
 #include "level_io.h"
+#include "efectos/efectos_manager.h"
 #include <vector>
 #include <memory>
 #include <cstdlib>
@@ -107,6 +108,7 @@ int main() {
     Mapa     mapa(400, 40);
     Ambiente ambiente(mapa);
     ambiente.CargarShader();
+    EfectosManager::Instancia().CargarShader();
     Editor   mapaEditor;
 
     Saturno saturno({50.0f, 10.0f, 0.0f}, 10.0f, 16.0f, 2.0f, 10.0f);
@@ -181,6 +183,8 @@ int main() {
     while (!WindowShouldClose()) {
         float   dt       = GetFrameTime();
         Vector2 mousePos = GetMousePosition();
+
+        EfectosManager::Instancia().Actualizar(dt);
 
         if (currentState == MENU) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -452,6 +456,7 @@ int main() {
                         }
                     }
                     avion.Dibujar();
+                    EfectosManager::Instancia().Dibujar(camera);
                 EndMode3D();
 
                 avion.DibujarMira();
@@ -483,6 +488,7 @@ int main() {
                 if (ambiente.GetModoNatural()) samVigia.DibujarCono();
                 if (ambiente.GetModoNatural()) avion.DibujarConoLock();
                 avion.Dibujar();
+                EfectosManager::Instancia().Dibujar(camera);
             EndMode3D();
 
             avion.DibujarMira();
@@ -520,6 +526,7 @@ int main() {
     }
 
     ambiente.DescargarShader();
+    EfectosManager::Instancia().DescargarShader();
     CloseWindow();
     return 0;
 }

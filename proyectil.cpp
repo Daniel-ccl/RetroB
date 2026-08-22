@@ -137,4 +137,20 @@ void Proyectil::Dibujar() const {
         c.a = (unsigned char)(180 * fraccion);
         DrawLine3D(trail[i], trail[i + 1], c);
     }
+}  
+
+
+bool Proyectil::ListoParaEstela(float dt) {
+    temporizadorEstela -= dt;
+    if (temporizadorEstela <= 0.0f) {
+        temporizadorEstela = 0.035f;
+        return true;
+    }
+    return false;
+}
+
+Vector3 Proyectil::GetDireccion() const {
+    float len = Vector3Length(velocidad);
+    if (len > 0.001f) return Vector3Scale(velocidad, 1.0f / len);
+    return { 0.0f, 0.0f, 1.0f };
 }

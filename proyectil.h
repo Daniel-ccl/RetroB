@@ -26,6 +26,9 @@ public:
 
     void Desactivar() { activo = false; }
 
+    bool ListoParaEstela(float dt);
+    Vector3 GetDireccion() const;
+
 private:
     Vector3 posicion;
     Vector3 origen;
@@ -36,6 +39,7 @@ private:
     float alcanceMax;
     float radioImpacto;
     bool activo;
+    float temporizadorEstela = 0.0f;
 
     float tamano;
 

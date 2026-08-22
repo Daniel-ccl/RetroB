@@ -3,6 +3,7 @@
 #include "avion.h"
 #include "bomba.h"
 #include "saturno.h"
+#include "efectos/efectos_manager.h"
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
@@ -274,6 +275,7 @@ void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
     if (IsKeyPressed(KEY_N) && miraTrabada && cooldownDisparo <= 0.0f) {
         float rotRad = rotacionY * DEG2RAD;
         Vector3 right = { cosf(rotRad), 0.0f, -sinf(rotRad) };
+        Vector3 dirDisparo = { sinf(rotRad), 0.0f, cosf(rotRad) };
 
         Vector3 origenIzq = Vector3Subtract(posicion, Vector3Scale(right, MISIL_SEPARACION_LANZAMIENTO));
         Vector3 origenDer = Vector3Add(posicion, Vector3Scale(right, MISIL_SEPARACION_LANZAMIENTO));
@@ -284,12 +286,19 @@ void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
         misiles.push_back(Proyectil(origenDer, miraObjetivoPos3D, MISIL_VELOCIDAD,
                                      /*homing=*/true, SKYBLUE, MISIL_ALCANCE_MAX, MISIL_RADIO_IMPACTO_INTERNO,
                                      MISIL_TAMANO, MISIL_TIEMPO_ERRANTE, MISIL_TIEMPO_RECTO));
+
+        EfectosManager::Instancia().EmitirLanzamiento(origenIzq, dirDisparo, SKYBLUE);
+        EfectosManager::Instancia().EmitirLanzamiento(origenDer, dirDisparo, SKYBLUE);
+
         cooldownDisparo = MISIL_COOLDOWN;
     }
 
     Vector3 objetivoHoming = objetivoExiste ? objetivoPos : miraObjetivoPos3D;
     for (auto& m : misiles) {
-        m.Actualizar(dt, objetivoHoming);
+	    m.Actualizar(dt, objetivoHoming);
+	    if (m.EstaActivo() && m.ListoParaEstela(dt)) {
+		    EfectosManager::Instancia().EmitirEstela(m.GetPosicion(), m.GetDireccion(), SKYBLUE);
+	    }
     }
     misiles.erase(std::remove_if(misiles.begin(), misiles.end(),
         [](const Proyectil& m) { return !m.EstaActivo(); }), misiles.end());
