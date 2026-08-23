@@ -8,12 +8,12 @@ EstelaMisil::EstelaMisil(Vector3 origenP, Vector3 direccionMisil, Color colorFue
     origen = origenP;
     colorFuego = colorFuegoP;
     tiempo = 0.0f;
-    duracionNucleo = 0.08f;
-    duracionTotal  = 0.45f;
+    duracionNucleo = 0.1f;
+    duracionTotal  = 0.8f;
     semilla = contadorSemillas++;
 
     Vector3 atras = Vector3Scale(direccionMisil, -1.0f);
-    destinoHumo = Vector3Add(origenP, Vector3Scale(atras, 0.6f));
+    destinoHumo = Vector3Add(origenP, Vector3Scale(atras, 1.4f));
 }
 
 void EstelaMisil::Actualizar(float dt) {
@@ -44,13 +44,13 @@ void EstelaMisil::Dibujar(const Camera3D& cam, Shader shader, Model modeloQuad,
 
     float tHumo = Clamp(tiempo / duracionTotal, 0.0f, 1.0f);
     Vector3 pos = TrayectoriaAleatoria(origen, destinoHumo, tHumo, 0.15f, semilla);
-    Vector3 colorHumo = { 0.55f, 0.55f, 0.6f };
+    Vector3 colorHumo = { 0.4f, 0.9f, 1.0f };
     float pixelSizeHumo = 6.0f;
     float modoHumo = 1.0f;
     SetShaderValue(shader, locs.color,     &colorHumo,     SHADER_UNIFORM_VEC3);
     SetShaderValue(shader, locs.pixelSize, &pixelSizeHumo, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, locs.progreso,  &tHumo,         SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, locs.modo,      &modoHumo,      SHADER_UNIFORM_FLOAT);
-    float escalaHumo = 0.3f + 0.5f * tHumo;
+    float escalaHumo = 0.6f + 1.1f * tHumo;
     DrawModel(modeloQuad, pos, escalaHumo, WHITE);
 }

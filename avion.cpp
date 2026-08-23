@@ -248,6 +248,8 @@ void Avion::ActualizarVueloLibre(float dt) {
 }
 
 void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
+
+    Color colorMisilJugador = {0, 240, 255, 255};
     ActualizarBoost(dt);
 
     if (planetaActual) {
@@ -281,14 +283,14 @@ void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
         Vector3 origenDer = Vector3Add(posicion, Vector3Scale(right, MISIL_SEPARACION_LANZAMIENTO));
 
         misiles.push_back(Proyectil(origenIzq, miraObjetivoPos3D, MISIL_VELOCIDAD,
-                                     /*homing=*/true, SKYBLUE, MISIL_ALCANCE_MAX, MISIL_RADIO_IMPACTO_INTERNO,
+                                     /*homing=*/true, colorMisilJugador, MISIL_ALCANCE_MAX, MISIL_RADIO_IMPACTO_INTERNO,
                                      MISIL_TAMANO, MISIL_TIEMPO_ERRANTE, MISIL_TIEMPO_RECTO));
         misiles.push_back(Proyectil(origenDer, miraObjetivoPos3D, MISIL_VELOCIDAD,
-                                     /*homing=*/true, SKYBLUE, MISIL_ALCANCE_MAX, MISIL_RADIO_IMPACTO_INTERNO,
+                                     /*homing=*/true, colorMisilJugador, MISIL_ALCANCE_MAX, MISIL_RADIO_IMPACTO_INTERNO,
                                      MISIL_TAMANO, MISIL_TIEMPO_ERRANTE, MISIL_TIEMPO_RECTO));
 
-        EfectosManager::Instancia().EmitirLanzamiento(origenIzq, dirDisparo, SKYBLUE);
-        EfectosManager::Instancia().EmitirLanzamiento(origenDer, dirDisparo, SKYBLUE);
+        EfectosManager::Instancia().EmitirLanzamiento(origenIzq, dirDisparo, colorMisilJugador);
+        EfectosManager::Instancia().EmitirLanzamiento(origenDer, dirDisparo, colorMisilJugador);
 
         cooldownDisparo = MISIL_COOLDOWN;
     }
@@ -297,7 +299,7 @@ void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
     for (auto& m : misiles) {
 	    m.Actualizar(dt, objetivoHoming);
 	    if (m.EstaActivo() && m.ListoParaEstela(dt)) {
-		    EfectosManager::Instancia().EmitirEstela(m.GetPosicion(), m.GetDireccion(), SKYBLUE);
+		    EfectosManager::Instancia().EmitirEstela(m.GetPosicion(), m.GetDireccion(), colorMisilJugador);
 	    }
     }
     misiles.erase(std::remove_if(misiles.begin(), misiles.end(),

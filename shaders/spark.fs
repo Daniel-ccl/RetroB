@@ -6,7 +6,7 @@ out vec4 finalColor;
 uniform vec3 colorBase;
 uniform float progreso;
 uniform float pixelSize;
-uniform float modo;       // 0 = chispa (encoge), 1 = humo (crece)
+uniform float modo;
 
 void main() {
     vec2 uvPix = floor(fragTexCoord * pixelSize) / pixelSize;
@@ -20,9 +20,9 @@ void main() {
     float escalones = 5.0;
     float intensidad = ceil(mascara * escalones) / escalones;
 
-    float brillo = modo > 0.5 ? mix(0.9, 0.1, progreso) : mix(1.6, 0.4, progreso);
+    float brillo = modo > 0.5 ? mix(2.2, 0.4, progreso) : mix(2.0, 0.5, progreso);
     vec3 color = colorBase * intensidad * brillo;
-    float alpha = intensidad * (1.0 - progreso) * (modo > 0.5 ? 0.6 : 1.0);
+    float alpha = intensidad * (1.0 - progreso);
 
     finalColor = vec4(color, alpha);
 }

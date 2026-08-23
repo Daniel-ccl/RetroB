@@ -19,17 +19,17 @@ DestelloLanzamiento::DestelloLanzamiento(Vector3 origenP, Vector3 direccionP, Co
     direccion = direccionP;
     color = colorP;
     tiempo = 0.0f;
-    duracionFlash = 0.12f;
-    duracionTotal = 0.35f;
+    duracionFlash = 0.18f;
+    duracionTotal = 0.5f;
 
-    int nAscuas = 6;
+    int nAscuas = 10;
     ascuas.reserve(nAscuas);
     for (int i = 0; i < nAscuas; i++) {
         unsigned int semilla = contadorSemillas++;
         Vector3 dirAleatoria = DireccionAleatoria(semilla);
-        Vector3 sesgo = Vector3Scale(direccion, -0.4f); // ascuas se quedan un poco atras del disparo
+        Vector3 sesgo = Vector3Scale(direccion, -0.4f);
         Vector3 destinoDir = Vector3Normalize(Vector3Add(dirAleatoria, sesgo));
-        float distancia = 0.8f + RuidoHash(semilla * 331u) * 1.2f;
+        float distancia = 1.2f + RuidoHash(semilla * 331u) * 1.8f;
         Vector3 destino = Vector3Add(origenP, Vector3Scale(destinoDir, distancia));
         ascuas.push_back({ origenP, destino, semilla });
     }
@@ -51,15 +51,15 @@ void DestelloLanzamiento::Dibujar(const Camera3D& cam, Shader shader, Model mode
 
     Vector3 colorVec = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f };
     float pixelSize = 10.0f;
-    SetShaderValue(shader, locs.color,     &colorVec,  SHADER_UNIFORM_VEC3);
-    SetShaderValue(shader, locs.pixelSize, &pixelSize, SHADER_UNIFORM_FLOAT);
     float modoChispa = 0.0f;
-    SetShaderValue(shader, locs.modo, &modoChispa, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, locs.color,     &colorVec,   SHADER_UNIFORM_VEC3);
+    SetShaderValue(shader, locs.pixelSize, &pixelSize,  SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, locs.modo,      &modoChispa, SHADER_UNIFORM_FLOAT);
 
     if (tiempo < duracionFlash) {
         float progresoFlash = tiempo / duracionFlash;
         SetShaderValue(shader, locs.progreso, &progresoFlash, SHADER_UNIFORM_FLOAT);
-        float escalaFlash = 1.6f * (1.0f - progresoFlash * 0.4f);
+        float escalaFlash = 2.6f * (1.0f - progresoFlash * 0.3f);
         DrawModel(modeloQuad, posicion, escalaFlash, WHITE);
     }
 
@@ -67,7 +67,7 @@ void DestelloLanzamiento::Dibujar(const Camera3D& cam, Shader shader, Model mode
     SetShaderValue(shader, locs.progreso, &tAscua, SHADER_UNIFORM_FLOAT);
     for (const auto& a : ascuas) {
         Vector3 p = TrayectoriaAleatoria(a.origen, a.destino, tAscua, 0.3f, a.semilla);
-        float escala = 0.35f * (1.0f - tAscua);
+        float escala = 0.55f * (1.0f - tAscua);
         if (escala > 0.01f) DrawModel(modeloQuad, p, escala, WHITE);
     }
 }

@@ -1,6 +1,8 @@
-#include "estela_misil.h"
+#include "explosion_sam.h"
 #include "efectos_manager.h"
 #include "destello_lanzamiento.h"
+#include "estela_misil.h"
+#include "rlgl.h"
 #include <algorithm>
 
 EfectosManager& EfectosManager::Instancia() {
@@ -15,7 +17,7 @@ void EfectosManager::CargarShader() {
     locs.color     = GetShaderLocation(shaderSpark, "colorBase");
     locs.progreso  = GetShaderLocation(shaderSpark, "progreso");
     locs.pixelSize = GetShaderLocation(shaderSpark, "pixelSize");
-    locs.modo = GetShaderLocation(shaderSpark, "modo"); 
+    locs.modo      = GetShaderLocation(shaderSpark, "modo");
 
     Mesh quad = GenMeshPlane(1.0f, 1.0f, 1, 1);
     modeloQuad = LoadModelFromMesh(quad);
@@ -40,7 +42,11 @@ void EfectosManager::Actualizar(float dt) {
 
 void EfectosManager::Dibujar(const Camera3D& cam) const {
     if (!shaderCargado) return;
+    rlDisableBackfaceCulling();
+    BeginBlendMode(BLEND_ADDITIVE);
     for (const auto& e : activos) e->Dibujar(cam, shaderSpark, modeloQuad, locs);
+    EndBlendMode();
+    rlEnableBackfaceCulling();
 }
 
 void EfectosManager::EmitirLanzamiento(Vector3 origen, Vector3 direccion, Color color) {
@@ -51,4 +57,7 @@ void EfectosManager::EmitirEstela(Vector3 origen, Vector3 direccionMisil, Color 
     activos.push_back(std::make_unique<EstelaMisil>(origen, direccionMisil, colorFuego));
 }
 
+void EfectosManager::EmitirExplosionSam(Vector3 origen, Color color) {
+    activos.push_back(std::make_unique<ExplosionSam>(origen, color));
+}
 

@@ -110,36 +110,6 @@ bool Proyectil::Actualizar(float dt, Vector3 objetivoActual) {
     return false;
 }
 
-void Proyectil::DibujarBurst() const {
-    for (const auto& p : burst) {
-        if (p.vida <= 0.0f) continue;
-        float fraccion = p.vida / p.vidaMax;
-        unsigned char alpha = (unsigned char)(255 * fraccion);
-        Color c = color;
-        c.a = alpha;
-        DrawSphere(p.posicion, tamano * 0.25f * fraccion, c);
-    }
-}
-
-void Proyectil::Dibujar() const {
-    DibujarBurst(); 
-
-    if (!activo) return;
-
-    Color glowExterior = color;
-    glowExterior.a = 90;
-    DrawSphere(posicion, tamano * 1.8f, glowExterior);
-    DrawSphere(posicion, tamano, color);
-
-    for (int i = 0; i < trailCount - 1; i++) {
-        float fraccion = 1.0f - ((float)i / (float)TRAIL_PUNTOS);
-        Color c = color;
-        c.a = (unsigned char)(180 * fraccion);
-        DrawLine3D(trail[i], trail[i + 1], c);
-    }
-}  
-
-
 bool Proyectil::ListoParaEstela(float dt) {
     temporizadorEstela -= dt;
     if (temporizadorEstela <= 0.0f) {
@@ -153,4 +123,53 @@ Vector3 Proyectil::GetDireccion() const {
     float len = Vector3Length(velocidad);
     if (len > 0.001f) return Vector3Scale(velocidad, 1.0f / len);
     return { 0.0f, 0.0f, 1.0f };
+}
+
+void Proyectil::DibujarBurst() const {
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (const auto& p : burst) {
+        if (p.vida <= 0.0f) continue;
+        float fraccion = p.vida / p.vidaMax;
+        unsigned char alpha = (unsigned char)(255 * fraccion);
+        Color c = color;
+        c.a = alpha;
+        DrawSphere(p.posicion, tamano * 0.3f * fraccion, c);
+    }
+    EndBlendMode();
+}
+
+void Proyectil::Dibujar() const {
+    DibujarBurst(); 
+
+    if (!activo) return;
+
+    float parpadeo = 0.85f + 0.15f * sinf((float)GetTime() * 40.0f);
+
+    Color glow = color;
+    glow.a = (unsigned char)(140 * parpadeo);
+    Color medio = color;
+
+    BeginBlendMode(BLEND_ADDITIVE);
+
+    DrawSphere(posicion, tamano * 2.6f, glow);
+    DrawSphere(posicion, tamano * 1.2f, medio);
+    DrawSphere(posicion, tamano * 0.45f, WHITE);
+
+    for (int i = 0; i < trailCount - 1; i++) {
+        float fraccion = 1.0f - ((float)i / (float)TRAIL_PUNTOS);
+        Color c = color;
+        c.a = (unsigned char)(230 * fraccion);
+        DrawLine3D(trail[i], trail[i + 1], c);
+
+        Vector3 jitter = {
+            (float)(rand() % 100 - 50) / 400.0f,
+            (float)(rand() % 100 - 50) / 400.0f,
+            (float)(rand() % 100 - 50) / 400.0f
+        };
+        Color cb = color;
+        cb.a = (unsigned char)(130 * fraccion);
+        DrawLine3D(Vector3Add(trail[i], jitter), Vector3Add(trail[i + 1], jitter), cb);
+    }
+
+    EndBlendMode();
 }

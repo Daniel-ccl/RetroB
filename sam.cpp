@@ -107,10 +107,12 @@ bool Sam::ActualizarMisiles(float dt, Vector3 posAvion) {
 }
 
 bool Sam::Actualizar(float dt, Vector3 posAvion) {
-    if (!salud.EstaVivo() && !floresGeneradas) {
-        floresGeneradas = true;
-        floresMuerte.Generar(posicionBase, {0.0f, 1.0f, 0.0f});
-    }
+
+	if (!salud.EstaVivo() && !floresGeneradas) {
+		floresGeneradas = true;
+		EfectosManager::Instancia().EmitirExplosionSam(posicionOjo);
+		floresMuerte.Generar(posicionBase, {0.0f, 1.0f, 0.0f});
+	}
 
     floresMuerte.Actualizar(dt);
 

@@ -18,6 +18,7 @@ public:
 
     void EmitirLanzamiento(Vector3 origen, Vector3 direccion, Color color = SKYBLUE);
     void EmitirEstela(Vector3 origen, Vector3 direccionMisil, Color colorFuego = ORANGE);
+    void EmitirExplosionSam(Vector3 origen, Color color = (Color){255, 60, 30, 255});
 
 private:
     EfectosManager() = default;
