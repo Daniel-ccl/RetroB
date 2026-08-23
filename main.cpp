@@ -17,6 +17,7 @@
 #include "level_data.h"
 #include "level_io.h"
 #include "efectos/efectos_manager.h"
+#include "ataque_enjambre.h"
 #include <vector>
 #include <memory>
 #include <cstdlib>
@@ -100,6 +101,7 @@ int main() {
 
     Avion avion;
     avion.SetPosicion({0.0f, 5.0f, 15.0f});
+    AtaqueEnjambre enjambreJugador;
 
     Notificaciones notificaciones;
 
@@ -280,6 +282,14 @@ int main() {
                         e->RecibirDano(20.0f);
                 }
 
+		std::vector<Enemy*> enemigosParaEnjambre;
+		for (auto& e : enemigosNivel) if (e->EstaVivo()) enemigosParaEnjambre.push_back(e.get());
+
+		if (IsKeyPressed(KEY_M) && !enemigosParaEnjambre.empty()) {
+			enjambreJugador.Disparar(avion.GetPosicion(), enemigosParaEnjambre[0]);
+		}
+		enjambreJugador.Actualizar(dt, enemigosParaEnjambre);
+
                 if (objetivoActualIdx < (int)nivelActual.objetivos.size()) {
                     const Objective& obj = nivelActual.objetivos[objetivoActualIdx];
 
@@ -353,6 +363,13 @@ int main() {
             if (danoActivado && huboImpactoSam) {
                 avion.RecibirDano(samVigia.GetDanoMisil());
             }
+
+	    if (IsKeyPressed(KEY_M) && samVigia.EstaVivo()) {
+		    enjambreJugador.Disparar(avion.GetPosicion(), &samVigia);
+	    }
+	    std::vector<Enemy*> enemigosParaEnjambre;
+	    if (samVigia.EstaVivo()) enemigosParaEnjambre.push_back(&samVigia);
+	    enjambreJugador.Actualizar(dt, enemigosParaEnjambre);
 
             // escarabajoGigante.Actualizar(dt);
 
@@ -457,6 +474,7 @@ int main() {
                     }
                     avion.Dibujar();
                     EfectosManager::Instancia().Dibujar(camera);
+		    enjambreJugador.Dibujar();
                 EndMode3D();
 
                 avion.DibujarMira();
@@ -489,6 +507,7 @@ int main() {
                 if (ambiente.GetModoNatural()) avion.DibujarConoLock();
                 avion.Dibujar();
                 EfectosManager::Instancia().Dibujar(camera);
+		enjambreJugador.Dibujar();
             EndMode3D();
 
             avion.DibujarMira();
