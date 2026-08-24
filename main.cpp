@@ -18,6 +18,7 @@
 #include "level_io.h"
 #include "efectos/efectos_manager.h"
 #include "ataque_enjambre.h"
+#include "postproceso_enjambre.h"
 #include <vector>
 #include <memory>
 #include <cstdlib>
@@ -88,6 +89,22 @@ int main() {
     InitWindow(screenWidth, screenHeight, "RetroB");
 
     SetExitKey(KEY_NULL);
+
+    RenderTexture2D escenaRender = LoadRenderTexture(
+        screenWidth,
+        screenHeight
+    );
+
+    SetTextureFilter(
+        escenaRender.texture,
+        TEXTURE_FILTER_POINT
+    );
+
+    PostProcesoEnjambre postProcesoEnjambre;
+    postProcesoEnjambre.Cargar(
+        screenWidth,
+        screenHeight
+    );
 
     GameState currentState = MENU;
     GameState estadoAntesDePausa = MENU; 
@@ -426,12 +443,25 @@ int main() {
             if (IsKeyPressed(KEY_ESCAPE)) { estadoAntesDePausa = FREE_ROOM; currentState = PAUSA; }
         }
 
-        BeginDrawing();
-        ClearBackground(BLACK);
+	const bool habilitarPostProcesoEnjambre =
+		currentState == LEVELS ||
+		currentState == FREE_ROOM;
 
-        bool dibujarComo_MENU         = (currentState == MENU);
-        bool dibujarComo_LEVEL_SELECT = (currentState == LEVEL_SELECT);
-        bool dibujarComo_LEVELS    = (currentState == LEVELS)    || (currentState == PAUSA && estadoAntesDePausa == LEVELS);
+	postProcesoEnjambre.Actualizar(
+			enjambreJugador,
+			camera,
+			screenWidth,
+			screenHeight,
+			habilitarPostProcesoEnjambre
+			);
+
+	BeginTextureMode(escenaRender);
+	ClearBackground(BLACK);
+
+
+	bool dibujarComo_MENU         = (currentState == MENU);
+	bool dibujarComo_LEVEL_SELECT = (currentState == LEVEL_SELECT);
+	bool dibujarComo_LEVELS    = (currentState == LEVELS)    || (currentState == PAUSA && estadoAntesDePausa == LEVELS);
         bool dibujarComo_EDITOR    = (currentState == EDITOR)    || (currentState == PAUSA && estadoAntesDePausa == EDITOR);
         bool dibujarComo_FREE_ROOM = (currentState == FREE_ROOM) || (currentState == PAUSA && estadoAntesDePausa == FREE_ROOM);
 
@@ -541,11 +571,24 @@ int main() {
             DrawRectangleRec(btn.quit,     DARKGRAY); DrawText("QUIT",       btn.quit.x+90,     btn.quit.y+15,    20, WHITE);
         }
 
+        EndTextureMode();
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        postProcesoEnjambre.Dibujar(
+            escenaRender
+        );
+
         EndDrawing();
     }
 
     ambiente.DescargarShader();
     EfectosManager::Instancia().DescargarShader();
+
+    postProcesoEnjambre.Descargar();
+    UnloadRenderTexture(escenaRender);
+
     CloseWindow();
     return 0;
 }
