@@ -40,6 +40,8 @@ public:
     void RecalcularAgua();
     void ToggleMode();
     bool GetModoNatural() const { return modoNatural; }
+    void DibujarCielo(int screenWidth, int screenHeight) const;
+
 
 private:
     const Mapa& mapa;
@@ -65,6 +67,10 @@ private:
     float alturaFogMax = 30.0f;
 
     float radioCullAmbiente = 60.0f; 
+    static constexpr int PARCHES_SUELO = 6;
+    std::vector<Color> coloresSuelo;
+    Color colorCieloArriba    = (Color){40, 55, 90, 255};
+    Color colorCieloHorizonte = (Color){170, 150, 140, 255};
 
     static constexpr int PUFFS_POR_NUBE = 4; 
     static constexpr float RELAMPAGO_INTERVALO = 9.0f;  
@@ -72,6 +78,8 @@ private:
     static constexpr float RELAMPAGO_DURACION_BAJADA = 0.5f;  
 
     void GenerarNubes();
+    void GenerarSuelo();
+    void DibujarSueloBase() const;
     void ActualizarPrecipitacion(float dt);
     void ActualizarRelampagos(float dt, const Camera3D& cam);
     void DibujarPrecipitacion(const Camera3D& cam) const;

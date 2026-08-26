@@ -16,6 +16,7 @@ static float cellRand(int x, int z, int salt = 0) {
 Ambiente::Ambiente(const Mapa& mapa) : mapa(mapa) {
     RecalcularAgua();
     GenerarNubes();
+    GenerarSuelo();
 }
 
 void Ambiente::ToggleMode() { modoNatural = !modoNatural; }
@@ -93,6 +94,44 @@ void Ambiente::GenerarNubes() {
         }
     }
 }
+
+void Ambiente::GenerarSuelo() {
+    coloresSuelo.clear();
+    coloresSuelo.reserve(PARCHES_SUELO * PARCHES_SUELO);
+    for (int i = 0; i < PARCHES_SUELO * PARCHES_SUELO; i++) {
+        unsigned char r = 90 + rand() % 30;
+        unsigned char g = 65 + rand() % 20;
+        unsigned char b = 45 + rand() % 15;
+        coloresSuelo.push_back((Color){r, g, b, 255});
+    }
+}
+
+void Ambiente::DibujarSueloBase() const {
+    float lado   = mapa.GetTamaño() / (float)PARCHES_SUELO;
+    float offset = mapa.GetTamaño() / 2.0f;
+    float y = -0.05f;
+
+    for (int x = 0; x < PARCHES_SUELO; x++) {
+        for (int z = 0; z < PARCHES_SUELO; z++) {
+            float x0 = x * lado - offset;
+            float z0 = z * lado - offset;
+            Vector3 a = { x0,        y, z0 };
+            Vector3 b = { x0 + lado, y, z0 };
+            Vector3 c = { x0,        y, z0 + lado };
+            Vector3 d = { x0 + lado, y, z0 + lado };
+
+            Color col = coloresSuelo[x * PARCHES_SUELO + z];
+            DrawTriangle3D(a, c, b, col);
+            DrawTriangle3D(b, c, d, col);
+        }
+    }
+}
+
+void Ambiente::DibujarCielo(int screenWidth, int screenHeight) const {
+    if (!modoNatural) return;
+    DrawRectangleGradientV(0, 0, screenWidth, screenHeight, colorCieloArriba, colorCieloHorizonte);
+}
+
 
 void Ambiente::ActualizarPrecipitacion(float dt) {
     for (auto& n : nubes) {
@@ -348,6 +387,7 @@ void Ambiente::DescargarShader() {
 
 void Ambiente::Dibujar(const Camera3D& cam) const {
     if (!modoNatural) return;
+    DibujarSueloBase();
 
     float mitadFovyRad = (cam.fovy * 0.5f) * DEG2RAD;
     float mitadFovxRad = atanf(tanf(mitadFovyRad) * (16.0f / 9.0f));

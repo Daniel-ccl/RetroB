@@ -489,98 +489,98 @@ int main() {
 
             DrawText("[ESC] volver", 400, 650, 16, LIGHTGRAY);
         }
-        else if (dibujarComo_LEVELS) {
-            if (nivelCargado) {
-                BeginMode3D(camera);
-                    mapa.Dibujar3D(camera.position, camera.target, camera.fovy,
-                                   (float)screenWidth / (float)screenHeight, 80.0f);
-                    ambiente.Dibujar(camera);
-                    for (const auto& e : enemigosNivel) {
-                        e->Dibujar();
-                        e->DibujarBarraSalud();
-                        if (ambiente.GetModoNatural()) {
-                            if (Sam* s = dynamic_cast<Sam*>(e.get())) s->DibujarCono();
-                        }
-                    }
-                    avion.Dibujar();
-                    EfectosManager::Instancia().Dibujar(camera);
-		    enjambreJugador.Dibujar();
-                EndMode3D();
+	else if (dibujarComo_LEVELS) {
+		if (nivelCargado) {
+			ambiente.DibujarCielo(screenWidth, screenHeight);
+			BeginMode3D(camera);
+			mapa.Dibujar3D(ambiente.GetModoNatural());
+			ambiente.Dibujar(camera);
+			for (const auto& e : enemigosNivel) {
+				e->Dibujar();
+				e->DibujarBarraSalud();
+				if (ambiente.GetModoNatural()) {
+					if (Sam* s = dynamic_cast<Sam*>(e.get())) s->DibujarCono();
+				}
+			}
+			avion.Dibujar();
+			EfectosManager::Instancia().Dibujar(camera);
+			enjambreJugador.Dibujar();
+			EndMode3D();
 
-                avion.DibujarMira();
-                notificaciones.Dibujar(screenWidth, screenHeight);
+			avion.DibujarMira();
+			notificaciones.Dibujar(screenWidth, screenHeight);
 
-                if (!nivelCompletado && objetivoActualIdx < (int)nivelActual.objetivos.size()) {
-                    const std::string& desc = nivelActual.objetivos[objetivoActualIdx].descripcion;
-                    DrawText(desc.c_str(), 10, 40, 18, YELLOW);
-                }
-                DrawFPS(10, 10);
-            } else {
-                DrawText("cargando nivel...", 400, 340, 24, LIGHTGRAY);
-            }
-        }
-        else if (dibujarComo_EDITOR) {
-            mapaEditor.Dibujar(mapa, screenWidth, screenHeight,
-                               portalPlano.GetPosicion(), saturno.GetPosicion());
-        }
-        else if (dibujarComo_FREE_ROOM) {
-            BeginMode3D(camera);
-                mapa.Dibujar3D(camera.position, camera.target, camera.fovy,
-                               (float)screenWidth / (float)screenHeight, 60.0f);
-                ambiente.Dibujar(camera);
-                saturno.Dibujar();
-                portalPlano.Dibujar();
-                portalSaturno.Dibujar();
-                samVigia.Dibujar();
-                samVigia.DibujarBarraSalud();
-                if (ambiente.GetModoNatural()) samVigia.DibujarCono();
-                if (ambiente.GetModoNatural()) avion.DibujarConoLock();
-                avion.Dibujar();
-                EfectosManager::Instancia().Dibujar(camera);
+			if (!nivelCompletado && objetivoActualIdx < (int)nivelActual.objetivos.size()) {
+				const std::string& desc = nivelActual.objetivos[objetivoActualIdx].descripcion;
+				DrawText(desc.c_str(), 10, 40, 18, YELLOW);
+			}
+			DrawFPS(10, 10);
+		} else {
+			DrawText("cargando nivel...", 400, 340, 24, LIGHTGRAY);
+		}
+	}
+	else if (dibujarComo_EDITOR) {
+		mapaEditor.Dibujar(mapa, screenWidth, screenHeight,
+				portalPlano.GetPosicion(), saturno.GetPosicion());
+	}
+	else if (dibujarComo_FREE_ROOM) {
+		ambiente.DibujarCielo(screenWidth, screenHeight);
+		BeginMode3D(camera);
+                mapa.Dibujar3D(ambiente.GetModoNatural());
+		ambiente.Dibujar(camera);
+		saturno.Dibujar();
+		portalPlano.Dibujar();
+		portalSaturno.Dibujar();
+		samVigia.Dibujar();
+		samVigia.DibujarBarraSalud();
+		if (ambiente.GetModoNatural()) samVigia.DibujarCono();
+		if (ambiente.GetModoNatural()) avion.DibujarConoLock();
+		avion.Dibujar();
+		EfectosManager::Instancia().Dibujar(camera);
 		enjambreJugador.Dibujar();
-            EndMode3D();
+		EndMode3D();
 
-            avion.DibujarMira();
+		avion.DibujarMira();
 
-            Hud::DibujarPanelPrincipal(screenWidth, screenHeight, avion.GetPorcentajeSalud(),
-                                        avion.GetFraccionBoost(), avion.GetMisilListo(),
-                                        /*municionInfinita=*/true, avion.GetNumMisilesActivos());
-            notificaciones.Dibujar(screenWidth, screenHeight);
+		Hud::DibujarPanelPrincipal(screenWidth, screenHeight, avion.GetPorcentajeSalud(),
+				avion.GetFraccionBoost(), avion.GetMisilListo(),
+				/*municionInfinita=*/true, avion.GetNumMisilesActivos());
+		notificaciones.Dibujar(screenWidth, screenHeight);
 
-            DrawFPS(10, 10);
-            const char* modoLabel = ambiente.GetModoNatural() ? "[TAB] Retro" : "[TAB] Natural";
-            DrawText(modoLabel, 10, 60, 18, LIGHTGRAY);
-        }
+		DrawFPS(10, 10);
+		const char* modoLabel = ambiente.GetModoNatural() ? "[TAB] Retro" : "[TAB] Natural";
+		DrawText(modoLabel, 10, 60, 18, LIGHTGRAY);
+	}
 
-        if (currentState == PAUSA) {
-            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){0, 0, 0, 160}); 
+	if (currentState == PAUSA) {
+		DrawRectangle(0, 0, screenWidth, screenHeight, (Color){0, 0, 0, 160}); 
 
-            rlViewport(screenWidth / 2, 0, screenWidth / 2, screenHeight);
-            BeginMode3D(camPausa);
-                decoracionPausa.Dibujar();
-            EndMode3D();
-            rlViewport(0, 0, screenWidth, screenHeight);
+		rlViewport(screenWidth / 2, 0, screenWidth / 2, screenHeight);
+		BeginMode3D(camPausa);
+		decoracionPausa.Dibujar();
+		EndMode3D();
+		rlViewport(0, 0, screenWidth, screenHeight);
 
-            DrawText("PAUSA", 80, 130, 50, SKYBLUE);
+		DrawText("PAUSA", 80, 130, 50, SKYBLUE);
 
-            BotonesPausa btn = LayoutBotonesPausa();
+		BotonesPausa btn = LayoutBotonesPausa();
 
-            DrawRectangleRec(btn.resume,   DARKGRAY); DrawText("RESUME",     btn.resume.x+70,   btn.resume.y+15,   20, WHITE);
-            DrawRectangleRec(btn.restart,  DARKGRAY); DrawText("RESTART",    btn.restart.x+65,  btn.restart.y+15,  20, WHITE);
-            DrawRectangleRec(btn.mainMenu, DARKGRAY); DrawText("MAIN MENU",  btn.mainMenu.x+50, btn.mainMenu.y+15, 20, WHITE);
-            DrawRectangleRec(btn.quit,     DARKGRAY); DrawText("QUIT",       btn.quit.x+90,     btn.quit.y+15,    20, WHITE);
-        }
+		DrawRectangleRec(btn.resume,   DARKGRAY); DrawText("RESUME",     btn.resume.x+70,   btn.resume.y+15,   20, WHITE);
+		DrawRectangleRec(btn.restart,  DARKGRAY); DrawText("RESTART",    btn.restart.x+65,  btn.restart.y+15,  20, WHITE);
+		DrawRectangleRec(btn.mainMenu, DARKGRAY); DrawText("MAIN MENU",  btn.mainMenu.x+50, btn.mainMenu.y+15, 20, WHITE);
+		DrawRectangleRec(btn.quit,     DARKGRAY); DrawText("QUIT",       btn.quit.x+90,     btn.quit.y+15,    20, WHITE);
+	}
 
-        EndTextureMode();
+	EndTextureMode();
 
-        BeginDrawing();
-        ClearBackground(BLACK);
+	BeginDrawing();
+	ClearBackground(BLACK);
 
-        postProcesoEnjambre.Dibujar(
-            escenaRender
-        );
+	postProcesoEnjambre.Dibujar(
+			escenaRender
+			);
 
-        EndDrawing();
+	EndDrawing();
     }
 
     ambiente.DescargarShader();
