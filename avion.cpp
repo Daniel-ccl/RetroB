@@ -105,6 +105,7 @@ void Avion::DibujarMira() const {
     float tam = miraTrabada ? 26.0f : 18.0f;
     Color color;
     if (miraTrabada) {
+	 color = RED;
     } else if (miraSoftLock) {
         float progreso = GetFraccionHardLock();
         color = (Color){

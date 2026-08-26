@@ -464,6 +464,7 @@ int main() {
 	bool dibujarComo_LEVELS    = (currentState == LEVELS)    || (currentState == PAUSA && estadoAntesDePausa == LEVELS);
         bool dibujarComo_EDITOR    = (currentState == EDITOR)    || (currentState == PAUSA && estadoAntesDePausa == EDITOR);
         bool dibujarComo_FREE_ROOM = (currentState == FREE_ROOM) || (currentState == PAUSA && estadoAntesDePausa == FREE_ROOM);
+	const bool mostrarDiagnostico = !ambiente.GetModoNatural();
 
         if (dibujarComo_MENU) {
             DrawText("RETRO-B", 500, 100, 60, SKYBLUE);
@@ -498,10 +499,11 @@ int main() {
 			for (const auto& e : enemigosNivel) {
 				e->Dibujar();
 				e->DibujarBarraSalud();
-				if (ambiente.GetModoNatural()) {
+				if (mostrarDiagnostico) {
 					if (Sam* s = dynamic_cast<Sam*>(e.get())) s->DibujarCono();
 				}
 			}
+			if (mostrarDiagnostico) avion.DibujarConoLock();
 			avion.Dibujar();
 			EfectosManager::Instancia().Dibujar(camera);
 			enjambreJugador.Dibujar();
@@ -533,8 +535,8 @@ int main() {
 		portalSaturno.Dibujar();
 		samVigia.Dibujar();
 		samVigia.DibujarBarraSalud();
-		if (ambiente.GetModoNatural()) samVigia.DibujarCono();
-		if (ambiente.GetModoNatural()) avion.DibujarConoLock();
+		if (mostrarDiagnostico) samVigia.DibujarCono();
+		if (mostrarDiagnostico) avion.DibujarConoLock();
 		avion.Dibujar();
 		EfectosManager::Instancia().Dibujar(camera);
 		enjambreJugador.Dibujar();
@@ -548,7 +550,7 @@ int main() {
 		notificaciones.Dibujar(screenWidth, screenHeight);
 
 		DrawFPS(10, 10);
-		const char* modoLabel = ambiente.GetModoNatural() ? "[TAB] Retro" : "[TAB] Natural";
+		const char* modoLabel = ambiente.GetModoNatural() ? "[TAB] Nat" : "[TAB] Retro";
 		DrawText(modoLabel, 10, 60, 18, LIGHTGRAY);
 	}
 
