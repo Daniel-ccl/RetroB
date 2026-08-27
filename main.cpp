@@ -88,6 +88,12 @@ int main() {
     int screenHeight = 720;
     InitWindow(screenWidth, screenHeight, "RetroB");
 
+    struct CierreVentana {
+        ~CierreVentana() {
+            CloseWindow();
+        }
+    } cierreVentana;
+
     SetExitKey(KEY_NULL);
 
     RenderTexture2D escenaRender = LoadRenderTexture(
@@ -591,6 +597,5 @@ int main() {
     postProcesoEnjambre.Descargar();
     UnloadRenderTexture(escenaRender);
 
-    CloseWindow();
     return 0;
 }
