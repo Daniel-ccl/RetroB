@@ -31,6 +31,16 @@ struct Objective {
     std::string              descripcion;
 };
 
+struct PortalSpawn {
+    Vector3 posicion;
+    float   radius;
+};
+
+struct PlanetSpawn {
+    Vector3 posicion;
+    float   radius;
+};
+
 struct LevelData {
     std::string nombre;
     int         tamano;   
@@ -41,8 +51,10 @@ struct LevelData {
     Vector3 jugadorSpawn;
     float   jugadorRotacion;
 
-    std::vector<EnemySpawn> enemigos;
-    std::vector<Objective>  objetivos; 
+    std::vector<EnemySpawn>  enemigos;
+    std::vector<Objective>   objetivos; 
+    std::vector<PortalSpawn> portales;
+    std::vector<PlanetSpawn> planetas;
 };
 
 #endif

@@ -149,6 +149,11 @@ int main() {
 
     LevelData nivelActual;
     std::vector<std::unique_ptr<Enemy>> enemigosNivel;
+    std::vector<Portal>  portalesNivel;
+    std::vector<Portal>  portalesRetornoNivel;
+    std::vector<Saturno> planetasNivel;
+    int  planetaActualIdx  = -1;
+    bool enPlanetaNivel    = false;
     int  objetivoActualIdx = 0;   
     bool nivelCargado      = false;
     bool nivelCompletado   = false;
@@ -186,6 +191,22 @@ int main() {
                 );
             }
         }
+
+        portalesNivel.clear();
+        for (const auto& p : nivelActual.portales) {
+            portalesNivel.push_back(Portal(p.posicion, p.radius, BLUE));
+        }
+
+        planetasNivel.clear();
+        portalesRetornoNivel.clear();
+        for (const auto& p : nivelActual.planetas) {
+            Saturno s(p.posicion, p.radius, p.radius * 1.6f, p.radius * 0.2f, 10.0f);
+            planetasNivel.push_back(s);
+            portalesRetornoNivel.push_back(Portal(s.GetNorthPole(), 2.0f, RED));
+        }
+
+        enPlanetaNivel   = false;
+        planetaActualIdx = -1;
 
         avion.SetPosicion(nivelActual.jugadorSpawn);
         avion.SetPlanetaActual(nullptr);
@@ -294,6 +315,36 @@ int main() {
                 avion.Actualizar(dt, {}, false);
                 notificaciones.Actualizar(dt);
                 ambiente.Actualizar(dt, camera);
+
+                for (auto& p : portalesNivel) p.Actualizar(dt);
+                for (auto& p : portalesRetornoNivel) p.Actualizar(dt);
+                for (auto& s : planetasNivel) s.Actualizar(dt);
+
+                Vector3 posAvionNivel = avion.GetPosicion();
+                if (!enPlanetaNivel) {
+                    for (int i = 0; i < (int)portalesNivel.size() && i < (int)planetasNivel.size(); i++) {
+                        if (portalesNivel[i].DetectarEntrada(posAvionNivel)) {
+                            avion.SetPlanetaActual(&planetasNivel[i]);
+                            Vector3 llegada = planetasNivel[i].GetNorthPole();
+                            llegada.x += 3.0f;
+                            avion.SetPosicion(llegada);
+                            avion.SetEscala(0.2f);
+                            enPlanetaNivel   = true;
+                            planetaActualIdx = i;
+                            notificaciones.Empujar("ENTRANDO AL PLANETA", NOTIF_INFO);
+                            break;
+                        }
+                    }
+                } else if (planetaActualIdx >= 0 && planetaActualIdx < (int)portalesRetornoNivel.size()) {
+                    if (portalesRetornoNivel[planetaActualIdx].DetectarEntrada(posAvionNivel)) {
+                        avion.SetPosicion(portalesNivel[planetaActualIdx].GetPosicion());
+                        avion.SetPlanetaActual(nullptr);
+                        avion.SetEscala(1.0f);
+                        enPlanetaNivel   = false;
+                        planetaActualIdx = -1;
+                        notificaciones.Empujar("REGRESANDO", NOTIF_INFO);
+                    }
+                }
 
                 for (auto& e : enemigosNivel) {
                     bool impacto = e->Actualizar(dt, avion.GetPosicion());
@@ -502,6 +553,9 @@ int main() {
 			BeginMode3D(camera);
 			mapa.Dibujar3D(ambiente.GetModoNatural());
 			ambiente.Dibujar(camera);
+			for (auto& s : planetasNivel) s.Dibujar();
+			for (auto& p : portalesNivel) p.Dibujar();
+			for (auto& p : portalesRetornoNivel) p.Dibujar();
 			for (const auto& e : enemigosNivel) {
 				e->Dibujar();
 				e->DibujarBarraSalud();
