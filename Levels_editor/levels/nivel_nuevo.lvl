@@ -1,4 +1,4 @@
-LEVEL nombre=nivel_nuevo2 tamano=400 celdas=40
+LEVEL nombre=nivel_nuevo tamano=400 celdas=40
 PLAYER_SPAWN x=0 y=0 z=0 rot=0
 
 TERRAIN_START
@@ -44,10 +44,6 @@ TERRAIN_START
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 TERRAIN_END
 
-PORTAL x=15 y=0 z=-55 radius=5
+PORTAL x=115 y=0 z=-135 radius=5
 
-PORTAL x=15 y=0 z=65 radius=5
-
-PLANET x=75 y=0 z=-35 radius=20
-
-PLANET x=75 y=0 z=45 radius=20
+PLANET x=-95 y=0 z=85 radius=40
