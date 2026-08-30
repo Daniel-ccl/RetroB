@@ -5,20 +5,21 @@
 #include <algorithm>
 
 static const Color COLOR_NEON = { 0, 255, 255, 200 };
+static constexpr float ALTURA_POR_NIVEL = 15.0f;
 
 static Color ColorPorAltura(float h) {
     Color c = BLUE;
-    if (h > 15.0f) c = GREEN;
-    if (h > 25.0f) c = YELLOW;
-    if (h > 35.0f) c = ORANGE;
-    if (h > 45.0f) c = RED;
+    if (h > ALTURA_POR_NIVEL * 1.5f) c = GREEN;
+    if (h > ALTURA_POR_NIVEL * 2.5f) c = YELLOW;
+    if (h > ALTURA_POR_NIVEL * 3.5f) c = ORANGE;
+    if (h > ALTURA_POR_NIVEL * 4.5f) c = RED;
     return c;
 }
 
 static Color ColorNaturalPorAltura(float h) {
     Color c = (Color){101, 74, 46, 255};
-    if (h > 25.0f) c = (Color){130, 130, 135, 255};
-    if (h > 45.0f) c = (Color){235, 240, 245, 255};
+    if (h > ALTURA_POR_NIVEL * 2.5f) c = (Color){130, 130, 135, 255};
+    if (h > ALTURA_POR_NIVEL * 4.5f) c = (Color){235, 240, 245, 255};
     return c;
 }
 
@@ -76,20 +77,23 @@ Mapa::Mapa(int tamaño, int celdas) {
 }
 
 Mapa::Mapa(const Mapa& otro)
-    : tamaño(otro.tamaño), celdas(otro.celdas), paso(otro.paso), alturas(otro.alturas) {
+    : tamaño(otro.tamaño), celdas(otro.celdas), paso(otro.paso), alturas(otro.alturas), revision(otro.revision) {
     sucio = true;
 }
 
 Mapa& Mapa::operator=(const Mapa& otro) {
     if (this == &otro) return *this;
+    std::uint64_t revisionAnterior = revision;
     DescargarModelos();
     tamaño  = otro.tamaño;
     celdas  = otro.celdas;
     paso    = otro.paso;
     alturas = otro.alturas;
     alturaFina.clear();
+    alturaNatural.clear();
     segmentosWireRetro.clear();
     sucio = true;
+    revision = revisionAnterior + 1;
     return *this;
 }
 
@@ -98,8 +102,10 @@ Mapa::~Mapa() {
 }
 
 void Mapa::SetAltura(int x, int z, int v) {
+    if (alturas[x][z] == v) return;
     alturas[x][z] = v;
     sucio = true;
+    revision++;
 }
 
 bool Mapa::PosicionAIndice(Vector3 pos, int& gridX, int& gridZ) {
@@ -113,7 +119,7 @@ bool Mapa::PosicionAIndice(Vector3 pos, int& gridX, int& gridZ) {
 float Mapa::AlturaBilinealCoarse(float fx, float fz) const {
     auto getMapH = [&](int mx, int mz) -> float {
         if (mx < 0 || mx >= celdas || mz < 0 || mz >= celdas) return 0.0f;
-        return (float)alturas[mx][mz] * 10.0f;
+        return (float)alturas[mx][mz] * ALTURA_POR_NIVEL;
     };
     float cx = fx - 0.5f;
     float cz = fz - 0.5f;
@@ -133,21 +139,38 @@ float Mapa::AlturaSubCubo(int x, int z, int sx, int sz) const {
     float fz = z + (sz + 0.5f) / 4.0f;
     float baseH = AlturaBilinealCoarse(fx, fz);
     if (baseH <= 0.5f) return 0.0f;
-    float ruido = ((x*13 + z*27 + sx*5 + sz*7) % 15) / 5.0f;
+    float ruido = ((x*13 + z*27 + sx*5 + sz*7) % 15) / 5.0f * (ALTURA_POR_NIVEL / 10.0f);
     return baseH + ruido;
 }
 
 float Mapa::AlturaSuperficie(float worldX, float worldZ) const {
     float offset = tamaño / 2.0f;
-    float gridXf = (worldX + offset) / paso;
-    float gridZf = (worldZ + offset) / paso;
-    int x = (int)std::floor(gridXf);
-    int z = (int)std::floor(gridZf);
-    float fracX = gridXf - x;
-    float fracZ = gridZf - z;
-    int sx = std::min(3, std::max(0, (int)(fracX * 4.0f)));
-    int sz = std::min(3, std::max(0, (int)(fracZ * 4.0f)));
-    return AlturaSubCubo(x, z, sx, sz);
+    if (worldX < -offset || worldX > offset || worldZ < -offset || worldZ > offset) return 0.0f;
+
+    int fino = celdas * 4;
+    int lado = fino + 1;
+    float separacion = paso / 4.0f;
+    float fx = (worldX + offset) / separacion;
+    float fz = (worldZ + offset) / separacion;
+    int x = std::min(fino - 1, std::max(0, (int)std::floor(fx)));
+    int z = std::min(fino - 1, std::max(0, (int)std::floor(fz)));
+    float tx = std::min(1.0f, std::max(0.0f, fx - x));
+    float tz = std::min(1.0f, std::max(0.0f, fz - z));
+
+    auto alturaVertice = [&](int vx, int vz) {
+        if (!sucio && alturaNatural.size() == (size_t)lado * lado)
+            return alturaNatural[(size_t)vx * lado + vz];
+        float h = AlturaBilinealCoarse((float)vx / 4.0f, (float)vz / 4.0f);
+        return h > 0.5f ? h : 0.0f;
+    };
+
+    float h00 = alturaVertice(x, z);
+    float h10 = alturaVertice(x + 1, z);
+    float h01 = alturaVertice(x, z + 1);
+    float h11 = alturaVertice(x + 1, z + 1);
+
+    if (tx + tz <= 1.0f) return h00 + tx * (h10 - h00) + tz * (h01 - h00);
+    return h11 + (1.0f - tx) * (h01 - h11) + (1.0f - tz) * (h10 - h11);
 }
 
 float Mapa::AlturaFinaEn(int x, int sx, int z, int sz) const {
@@ -169,6 +192,7 @@ void Mapa::DescargarModelos() {
     if (modelosCargados) {
         UnloadModel(modeloSolidoRetro);
         UnloadModel(modeloNatural);
+        UnloadModel(modeloCierreNatural);
         modelosCargados = false;
     }
 }
@@ -248,6 +272,7 @@ void Mapa::ConstruirModeloNatural() {
     std::vector<float> verts((size_t)lado*lado*3);
     std::vector<float> norms((size_t)lado*lado*3, 0.0f);
     std::vector<unsigned char> cols((size_t)lado*lado*4);
+    alturaNatural.assign((size_t)lado*lado, 0.0f);
 
     for (int i = 0; i < lado; i++) {
         for (int j = 0; j < lado; j++) {
@@ -255,13 +280,39 @@ void Mapa::ConstruirModeloNatural() {
             if (h <= 0.5f) h = 0.0f;
 
             size_t v = (size_t)(i*lado+j);
+            alturaNatural[v] = h;
             verts[v*3+0] = ((float)i/4.0f)*paso - offset;
             verts[v*3+1] = h;
             verts[v*3+2] = ((float)j/4.0f)*paso - offset;
-            norms[v*3+1] = 1.0f;
-
             Color col = ColorNaturalPorAltura(h);
             cols[v*4+0]=col.r; cols[v*4+1]=col.g; cols[v*4+2]=col.b; cols[v*4+3]=255;
+        }
+    }
+
+    float separacion = paso / 4.0f;
+    for (int i = 0; i < lado; i++) {
+        int ia = std::max(0, i - 1);
+        int ib = std::min(fino, i + 1);
+        float dx = (float)(ib - ia) * separacion;
+
+        for (int j = 0; j < lado; j++) {
+            int ja = std::max(0, j - 1);
+            int jb = std::min(fino, j + 1);
+            float dz = (float)(jb - ja) * separacion;
+
+            float hXa = verts[((size_t)ia * lado + j) * 3 + 1];
+            float hXb = verts[((size_t)ib * lado + j) * 3 + 1];
+            float hZa = verts[((size_t)i * lado + ja) * 3 + 1];
+            float hZb = verts[((size_t)i * lado + jb) * 3 + 1];
+
+            float nx = -(hXb - hXa) / dx;
+            float ny = 1.0f;
+            float nz = -(hZb - hZa) / dz;
+            float inv = 1.0f / std::sqrt(nx*nx + ny*ny + nz*nz);
+            size_t v = (size_t)i * lado + j;
+            norms[v*3+0] = nx * inv;
+            norms[v*3+1] = ny * inv;
+            norms[v*3+2] = nz * inv;
         }
     }
 
@@ -273,8 +324,8 @@ void Mapa::ConstruirModeloNatural() {
             unsigned short b = (unsigned short)((i+1)*lado+j);
             unsigned short c = (unsigned short)(i*lado+j+1);
             unsigned short d = (unsigned short)((i+1)*lado+j+1);
-            idx.push_back(a); idx.push_back(b); idx.push_back(c);
-            idx.push_back(b); idx.push_back(d); idx.push_back(c);
+            idx.push_back(a); idx.push_back(c); idx.push_back(b);
+            idx.push_back(b); idx.push_back(c); idx.push_back(d);
         }
     }
 
@@ -294,10 +345,129 @@ void Mapa::ConstruirModeloNatural() {
     modeloNatural = LoadModelFromMesh(mesh);
 }
 
+void Mapa::ConstruirCierreNatural() {
+    std::vector<float> verts;
+    std::vector<float> norms;
+    std::vector<unsigned char> cols;
+    std::vector<unsigned short> idx;
+
+    auto agregarVertice = [&](Vector3 p, Vector3 n, Color color) {
+        verts.push_back(p.x);
+        verts.push_back(p.y);
+        verts.push_back(p.z);
+        norms.push_back(n.x);
+        norms.push_back(n.y);
+        norms.push_back(n.z);
+        cols.push_back(color.r);
+        cols.push_back(color.g);
+        cols.push_back(color.b);
+        cols.push_back(color.a);
+    };
+
+    auto agregarQuad = [&](Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, Color color) {
+        unsigned short base = (unsigned short)(verts.size() / 3);
+        agregarVertice(a, normal, color);
+        agregarVertice(b, normal, color);
+        agregarVertice(c, normal, color);
+        agregarVertice(d, normal, color);
+        idx.push_back(base);
+        idx.push_back(base + 1);
+        idx.push_back(base + 2);
+        idx.push_back(base);
+        idx.push_back(base + 2);
+        idx.push_back(base + 3);
+    };
+
+    float offset = tamaño / 2.0f;
+    float baseY = -2.0f;
+    Color suelo = ColorNaturalPorAltura(0.0f);
+
+    agregarQuad(
+        {-offset, baseY, -offset},
+        { offset, baseY, -offset},
+        { offset, baseY,  offset},
+        {-offset, baseY,  offset},
+        {0.0f, -1.0f, 0.0f},
+        suelo
+    );
+
+    int fino = celdas * 4;
+    float separacion = paso / 4.0f;
+
+    for (int i = 0; i < fino; i++) {
+        float a = -offset + i * separacion;
+        float b = a + separacion;
+
+        float hIzqA = AlturaBilinealCoarse(0.0f, (float)i / 4.0f);
+        float hIzqB = AlturaBilinealCoarse(0.0f, (float)(i + 1) / 4.0f);
+        Color colorIzq = ColorNaturalPorAltura((hIzqA + hIzqB) * 0.5f);
+        agregarQuad(
+            {-offset, baseY, a},
+            {-offset, baseY, b},
+            {-offset, hIzqB, b},
+            {-offset, hIzqA, a},
+            {-1.0f, 0.0f, 0.0f},
+            colorIzq
+        );
+
+        float hDerA = AlturaBilinealCoarse((float)celdas, (float)i / 4.0f);
+        float hDerB = AlturaBilinealCoarse((float)celdas, (float)(i + 1) / 4.0f);
+        Color colorDer = ColorNaturalPorAltura((hDerA + hDerB) * 0.5f);
+        agregarQuad(
+            {offset, baseY, b},
+            {offset, baseY, a},
+            {offset, hDerA, a},
+            {offset, hDerB, b},
+            {1.0f, 0.0f, 0.0f},
+            colorDer
+        );
+
+        float hFrenteA = AlturaBilinealCoarse((float)i / 4.0f, 0.0f);
+        float hFrenteB = AlturaBilinealCoarse((float)(i + 1) / 4.0f, 0.0f);
+        Color colorFrente = ColorNaturalPorAltura((hFrenteA + hFrenteB) * 0.5f);
+        agregarQuad(
+            {b, baseY, -offset},
+            {a, baseY, -offset},
+            {a, hFrenteA, -offset},
+            {b, hFrenteB, -offset},
+            {0.0f, 0.0f, -1.0f},
+            colorFrente
+        );
+
+        float hFondoA = AlturaBilinealCoarse((float)i / 4.0f, (float)celdas);
+        float hFondoB = AlturaBilinealCoarse((float)(i + 1) / 4.0f, (float)celdas);
+        Color colorFondo = ColorNaturalPorAltura((hFondoA + hFondoB) * 0.5f);
+        agregarQuad(
+            {a, baseY, offset},
+            {b, baseY, offset},
+            {b, hFondoB, offset},
+            {a, hFondoA, offset},
+            {0.0f, 0.0f, 1.0f},
+            colorFondo
+        );
+    }
+
+    Mesh mesh = {0};
+    mesh.vertexCount = (int)(verts.size() / 3);
+    mesh.triangleCount = (int)(idx.size() / 3);
+    mesh.vertices = (float*)MemAlloc(verts.size() * sizeof(float));
+    memcpy(mesh.vertices, verts.data(), verts.size() * sizeof(float));
+    mesh.normals = (float*)MemAlloc(norms.size() * sizeof(float));
+    memcpy(mesh.normals, norms.data(), norms.size() * sizeof(float));
+    mesh.colors = (unsigned char*)MemAlloc(cols.size() * sizeof(unsigned char));
+    memcpy(mesh.colors, cols.data(), cols.size() * sizeof(unsigned char));
+    mesh.indices = (unsigned short*)MemAlloc(idx.size() * sizeof(unsigned short));
+    memcpy(mesh.indices, idx.data(), idx.size() * sizeof(unsigned short));
+
+    UploadMesh(&mesh, false);
+    modeloCierreNatural = LoadModelFromMesh(mesh);
+}
+
 void Mapa::ConstruirModelos() {
     DescargarModelos();
     ConstruirModeloRetro();
     ConstruirModeloNatural();
+    ConstruirCierreNatural();
     modelosCargados = true;
 }
 
@@ -310,6 +480,7 @@ void Mapa::Dibujar3D(bool modoNatural) {
 
     if (modoNatural) {
         DrawModel(modeloNatural, {0,0,0}, 1.0f, WHITE);
+        DrawModel(modeloCierreNatural, {0,0,0}, 1.0f, WHITE);
         return;
     }
 

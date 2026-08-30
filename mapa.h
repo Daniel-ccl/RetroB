@@ -2,6 +2,7 @@
 #define MAPA_H
 
 #include "raylib.h"
+#include <cstdint>
 #include <vector>
 
 class Mapa {
@@ -12,13 +13,16 @@ private:
 
     std::vector<std::vector<int>> alturas;
     std::vector<float> alturaFina;
+    std::vector<float> alturaNatural;
     std::vector<Vector3> segmentosWireRetro;
 
     bool sucio = true;
     bool modelosCargados = false;
+    std::uint64_t revision = 0;
 
     Model modeloSolidoRetro{};
     Model modeloNatural{};
+    Model modeloCierreNatural{};
 
     float AlturaBilinealCoarse(float fx, float fz) const;
     float AlturaSubCubo(int x, int z, int sx, int sz) const;
@@ -28,6 +32,7 @@ private:
     void ConstruirModelos();
     void ConstruirModeloRetro();
     void ConstruirModeloNatural();
+    void ConstruirCierreNatural();
     void DescargarModelos();
 
 public:
@@ -36,7 +41,6 @@ public:
     Mapa& operator=(const Mapa& otro);
     ~Mapa();
 
-    // el mesh se reconstruye solo si sucio==true (editor/carga de nivel)
     void Dibujar3D(bool modoNatural);
 
     bool PosicionAIndice(Vector3 pos, int& gridX, int& gridZ);
@@ -46,6 +50,7 @@ public:
     int   GetTamaño()  const { return tamaño; }
     float GetPaso()    const { return paso; }
     int   GetAltura(int x, int z) const { return alturas[x][z]; }
+    std::uint64_t GetRevision() const { return revision; }
     void  SetAltura(int x, int z, int v);
 };
 
