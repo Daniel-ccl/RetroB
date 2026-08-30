@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 #include <cstdlib>
+#include <string>
 
 enum GameState { MENU, FREE_ROOM, LEVELS, LEVEL_SELECT, EDITOR, PAUSA };
 
@@ -127,6 +128,36 @@ int main() {
     AtaqueEnjambre enjambreJugador;
 
     Notificaciones notificaciones;
+
+    auto IntentarDisparoEnjambre = [&](Enemy* objetivo) {
+        if (!objetivo || !objetivo->EstaVivo()) {
+            notificaciones.Empujar("ENJAMBRE: SIN OBJETIVO", NOTIF_INFO);
+            return;
+        }
+
+        if (!enjambreJugador.ListoParaDisparar()) {
+            int segundos = (int)enjambreJugador.GetCooldownRestante() + 1;
+            notificaciones.Empujar(
+                "ENJAMBRE RECARGANDO: " + std::to_string(segundos) + "s",
+                NOTIF_INFO
+            );
+            return;
+        }
+
+        float distancia = Vector3Distance(avion.GetPosicion(), objetivo->GetPosicion());
+        if (distancia < AtaqueEnjambre::DISTANCIA_MINIMA_ENJAMBRE) {
+            int faltantes = (int)(AtaqueEnjambre::DISTANCIA_MINIMA_ENJAMBRE - distancia) + 1;
+            notificaciones.Empujar(
+                "ENJAMBRE: ALEJATE " + std::to_string(faltantes) + "m",
+                NOTIF_INFO
+            );
+            return;
+        }
+
+        if (enjambreJugador.Disparar(avion.GetPosicion(), objetivo)) {
+            notificaciones.Empujar("ENJAMBRE DESPLEGADO", NOTIF_EXITO);
+        }
+    };
 
     bool danoActivado = false;
 
@@ -359,8 +390,10 @@ int main() {
 		std::vector<Enemy*> enemigosParaEnjambre;
 		for (auto& e : enemigosNivel) if (e->EstaVivo()) enemigosParaEnjambre.push_back(e.get());
 
-		if (IsKeyPressed(KEY_M) && !enemigosParaEnjambre.empty()) {
-			enjambreJugador.Disparar(avion.GetPosicion(), enemigosParaEnjambre[0]);
+		if (IsKeyPressed(KEY_M)) {
+			IntentarDisparoEnjambre(
+				enemigosParaEnjambre.empty() ? nullptr : enemigosParaEnjambre[0]
+			);
 		}
 		enjambreJugador.Actualizar(dt, enemigosParaEnjambre);
 
@@ -438,8 +471,8 @@ int main() {
                 avion.RecibirDano(samVigia.GetDanoMisil());
             }
 
-	    if (IsKeyPressed(KEY_M) && samVigia.EstaVivo()) {
-		    enjambreJugador.Disparar(avion.GetPosicion(), &samVigia);
+	    if (IsKeyPressed(KEY_M)) {
+		    IntentarDisparoEnjambre(samVigia.EstaVivo() ? &samVigia : nullptr);
 	    }
 	    std::vector<Enemy*> enemigosParaEnjambre;
 	    if (samVigia.EstaVivo()) enemigosParaEnjambre.push_back(&samVigia);
