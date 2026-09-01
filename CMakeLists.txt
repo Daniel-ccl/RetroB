@@ -11,7 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(RAYLIB REQUIRED IMPORTED_TARGET raylib)
 
-set(DIRECTORIO_EJECUCION_JUEGO "${CMAKE_BINARY_DIR}/game")
+set(DIRECTORIO_EJECUCION_JUEGO "${CMAKE_CURRENT_SOURCE_DIR}")
 set(DIRECTORIO_EJECUCION_EDITOR "${CMAKE_BINARY_DIR}/tools/level_editor")
 
 set(FUENTES_RETROB
@@ -34,6 +34,7 @@ set(FUENTES_RETROB
     salud.cpp
     sam.cpp
     saturno.cpp
+    ui.cpp
     efectos/destello_lanzamiento.cpp
     efectos/efectos_manager.cpp
     efectos/estela_misil.cpp
@@ -45,6 +46,7 @@ set(FUENTES_EDITOR_NIVELES
     Levels_editor/main.cpp
     Levels_editor/level_io.cpp
     Levels_editor/ui_textbox.cpp
+    ui.cpp
 )
 
 add_executable(RetroB ${FUENTES_RETROB})
@@ -60,7 +62,10 @@ set_target_properties(RetroB PROPERTIES
 add_executable(EditorNiveles EXCLUDE_FROM_ALL ${FUENTES_EDITOR_NIVELES})
 
 target_compile_features(EditorNiveles PRIVATE cxx_std_17)
-target_include_directories(EditorNiveles PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Levels_editor")
+target_include_directories(EditorNiveles PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Levels_editor"
+)
 target_link_libraries(EditorNiveles PRIVATE PkgConfig::RAYLIB)
 
 set_target_properties(EditorNiveles PROPERTIES
@@ -85,13 +90,8 @@ function(enlazar_directorio_fuente origen destino)
 endfunction()
 
 enlazar_directorio_fuente(
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders"
-    "${DIRECTORIO_EJECUCION_JUEGO}/shaders"
-)
-
-enlazar_directorio_fuente(
-    "${CMAKE_CURRENT_SOURCE_DIR}/Levels_editor/levels"
-    "${DIRECTORIO_EJECUCION_JUEGO}/Levels_editor/levels"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
+    "${DIRECTORIO_EJECUCION_EDITOR}/assets/fonts"
 )
 
 enlazar_directorio_fuente(

@@ -13,6 +13,7 @@
 #include "pausa_decoracion.h"
 #include "notificaciones.h"
 #include "hud.h"
+#include "ui.h"
 #include "enemy.h"
 #include "level_data.h"
 #include "level_io.h"
@@ -96,6 +97,10 @@ int main() {
     } cierreVentana;
 
     SetExitKey(KEY_NULL);
+
+    if (!UI::Inicializar("assets/fonts/SyneMono-Regular.ttf")) {
+	    TraceLog(LOG_WARNING, "No se pudo cargar la fuente de la interfaz");
+    }
 
     RenderTexture2D escenaRender = LoadRenderTexture(
         screenWidth,
@@ -556,30 +561,80 @@ int main() {
         bool dibujarComo_FREE_ROOM = (currentState == FREE_ROOM) || (currentState == PAUSA && estadoAntesDePausa == FREE_ROOM);
 	const bool mostrarDiagnostico = !ambiente.GetModoNatural();
 
-        if (dibujarComo_MENU) {
-            DrawText("RETRO-B", 500, 100, 60, SKYBLUE);
-            DrawRectangle(500, 200, 280, 50, DARKGRAY); DrawText("FREE ROOM", 550, 215, 20, WHITE);
-            DrawRectangle(500, 300, 280, 50, DARKGRAY); DrawText("LEVELS",    580, 315, 20, WHITE);
-            DrawRectangle(500, 400, 280, 50, DARKGRAY); DrawText("EDITOR",    580, 415, 20, WHITE);
-            DrawRectangle(500, 500, 280, 50, DARKGRAY); DrawText("EXIT",      600, 515, 20, WHITE);
-        }
-        else if (dibujarComo_LEVEL_SELECT) {
-            DrawText("SELECCIONA UN NIVEL", 400, 100, 30, SKYBLUE);
+	if (dibujarComo_MENU) {
+		UI::DibujarTextoCentrado(
+				"RETRO-B",
+				{0.0f, 100.0f, (float)screenWidth, 60.0f},
+				60.0f,
+				SKYBLUE,
+				2.0f
+				);
 
-            if (nivelesDisponibles.empty()) {
-                DrawText("no hay niveles guardados todavia", 400, 200, 20, LIGHTGRAY);
-                DrawText("usa el Editor para crear uno en Levels_editor/levels/", 400, 230, 16, GRAY);
-            } else {
-                for (int i = 0; i < (int)nivelesDisponibles.size(); i++) {
-                    Rectangle r = { 400.0f, 180.0f + i * 60.0f, 480.0f, 50.0f };
-                    DrawRectangleRec(r, DARKGRAY);
-                    DrawRectangleLinesEx(r, 1.0f, SKYBLUE);
-                    DrawText(nivelesDisponibles[i].c_str(), r.x + 20, r.y + 15, 18, WHITE);
-                }
-            }
+		const Rectangle botonFreeRoom{500.0f, 200.0f, 280.0f, 50.0f};
+		const Rectangle botonLevels{500.0f, 300.0f, 280.0f, 50.0f};
+		const Rectangle botonEditor{500.0f, 400.0f, 280.0f, 50.0f};
+		const Rectangle botonExit{500.0f, 500.0f, 280.0f, 50.0f};
 
-            DrawText("[ESC] volver", 400, 650, 16, LIGHTGRAY);
-        }
+		DrawRectangleRec(botonFreeRoom, DARKGRAY);
+		DrawRectangleRec(botonLevels, DARKGRAY);
+		DrawRectangleRec(botonEditor, DARKGRAY);
+		DrawRectangleRec(botonExit, DARKGRAY);
+
+		UI::DibujarTextoCentrado("FREE ROOM", botonFreeRoom, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("LEVELS", botonLevels, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("EDITOR", botonEditor, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("EXIT", botonExit, 20.0f, WHITE);
+	}
+	else if (dibujarComo_LEVEL_SELECT) {
+		UI::DibujarTexto(
+				"SELECCIONA UN NIVEL",
+				{400.0f, 100.0f},
+				30.0f,
+				SKYBLUE
+				);
+
+		if (nivelesDisponibles.empty()) {
+			UI::DibujarTexto(
+					"no hay niveles guardados todavía",
+					{400.0f, 200.0f},
+					20.0f,
+					LIGHTGRAY
+					);
+
+			UI::DibujarTexto(
+					"usa el Editor para crear uno en Levels_editor/levels/",
+					{400.0f, 230.0f},
+					16.0f,
+					GRAY
+					);
+		} else {
+			for (int i = 0; i < (int)nivelesDisponibles.size(); i++) {
+				Rectangle r{
+					400.0f,
+						180.0f + i * 60.0f,
+						480.0f,
+						50.0f
+				};
+
+				DrawRectangleRec(r, DARKGRAY);
+				DrawRectangleLinesEx(r, 1.0f, SKYBLUE);
+
+				UI::DibujarTextoCentrado(
+						nivelesDisponibles[i].c_str(),
+						r,
+						18.0f,
+						WHITE
+						);
+			}
+		}
+
+		UI::DibujarTexto(
+				"[ESC] volver",
+				{400.0f, 650.0f},
+				16.0f,
+				LIGHTGRAY
+				);
+	}
 	else if (dibujarComo_LEVELS) {
 		if (nivelCargado) {
 			ambiente.DibujarCielo(screenWidth, screenHeight);
@@ -607,11 +662,21 @@ int main() {
 
 			if (!nivelCompletado && objetivoActualIdx < (int)nivelActual.objetivos.size()) {
 				const std::string& desc = nivelActual.objetivos[objetivoActualIdx].descripcion;
-				DrawText(desc.c_str(), 10, 40, 18, YELLOW);
+				UI::DibujarTexto(
+						desc.c_str(),
+						{10.0f, 40.0f},
+						18.0f,
+						YELLOW
+						);
 			}
 			DrawFPS(10, 10);
 		} else {
-			DrawText("cargando nivel...", 400, 340, 24, LIGHTGRAY);
+			UI::DibujarTexto(
+					"cargando nivel...",
+					{400.0f, 340.0f},
+					24.0f,
+					LIGHTGRAY
+					);
 		}
 	}
 	else if (dibujarComo_EDITOR) {
@@ -621,7 +686,7 @@ int main() {
 	else if (dibujarComo_FREE_ROOM) {
 		ambiente.DibujarCielo(screenWidth, screenHeight);
 		BeginMode3D(camera);
-                mapa.Dibujar3D(ambiente.GetModoNatural());
+		mapa.Dibujar3D(ambiente.GetModoNatural());
 		ambiente.Dibujar(camera);
 		saturno.Dibujar();
 		portalPlano.Dibujar();
@@ -644,7 +709,12 @@ int main() {
 
 		DrawFPS(10, 10);
 		const char* modoLabel = ambiente.GetModoNatural() ? "[TAB] Nat" : "[TAB] Retro";
-		DrawText(modoLabel, 10, 60, 18, LIGHTGRAY);
+		UI::DibujarTexto(
+				modoLabel,
+				{10.0f, 60.0f},
+				18.0f,
+				LIGHTGRAY
+				);
 	}
 
 	if (currentState == PAUSA) {
@@ -656,14 +726,24 @@ int main() {
 		EndMode3D();
 		rlViewport(0, 0, screenWidth, screenHeight);
 
-		DrawText("PAUSA", 80, 130, 50, SKYBLUE);
+		UI::DibujarTexto(
+				"PAUSA",
+				{80.0f, 130.0f},
+				50.0f,
+				SKYBLUE
+				);
 
 		BotonesPausa btn = LayoutBotonesPausa();
 
-		DrawRectangleRec(btn.resume,   DARKGRAY); DrawText("RESUME",     btn.resume.x+70,   btn.resume.y+15,   20, WHITE);
-		DrawRectangleRec(btn.restart,  DARKGRAY); DrawText("RESTART",    btn.restart.x+65,  btn.restart.y+15,  20, WHITE);
-		DrawRectangleRec(btn.mainMenu, DARKGRAY); DrawText("MAIN MENU",  btn.mainMenu.x+50, btn.mainMenu.y+15, 20, WHITE);
-		DrawRectangleRec(btn.quit,     DARKGRAY); DrawText("QUIT",       btn.quit.x+90,     btn.quit.y+15,    20, WHITE);
+		DrawRectangleRec(btn.resume, DARKGRAY);
+		DrawRectangleRec(btn.restart, DARKGRAY);
+		DrawRectangleRec(btn.mainMenu, DARKGRAY);
+		DrawRectangleRec(btn.quit, DARKGRAY);
+
+		UI::DibujarTextoCentrado("RESUME", btn.resume, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("RESTART", btn.restart, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("MAIN MENU", btn.mainMenu, 20.0f, WHITE);
+		UI::DibujarTextoCentrado("QUIT", btn.quit, 20.0f, WHITE);
 	}
 
 	EndTextureMode();
@@ -683,6 +763,7 @@ int main() {
 
     postProcesoEnjambre.Descargar();
     UnloadRenderTexture(escenaRender);
+    UI::Finalizar();
 
     return 0;
 }
