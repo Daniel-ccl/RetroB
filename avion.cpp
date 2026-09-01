@@ -9,6 +9,13 @@
 #include <algorithm>
 #include "rlgl.h"
 
+namespace {
+
+constexpr const char* RUTA_MODELO_AVION = "assets/spaceship/spaceship.obj";
+constexpr float ESCALA_MODELO_AVION = 0.012f;
+
+}
+
 Avion::Avion() {
     posicion = { 0.0f, 5.0f, 0.0f };
     rotacionY = 0.0f;
@@ -40,6 +47,13 @@ Avion::Avion() {
 
     planetaActual = nullptr;
     escala = 1.0f;
+
+    modelo = LoadModel(RUTA_MODELO_AVION);
+    modeloCargado = modelo.meshCount > 0;
+}
+
+Avion::~Avion() {
+    if (modeloCargado) UnloadModel(modelo);
 }
 
 void Avion::ActualizarMira(float dt, const Camera3D& cam, Vector3 objetivoPos, bool objetivoExiste,
@@ -321,7 +335,7 @@ void Avion::Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste) {
         }), bombas.end());
 }
 
-void Avion::Dibujar() {
+void Avion::DibujarGeometriaProcedural() const {
     float ancho = 2.0f * escala;
     float largo = 4.0f * escala;
     float grosor = 0.5f * escala;
@@ -335,6 +349,21 @@ void Avion::Dibujar() {
 
     Color colorNeon = (Color){ 255, 0, 255, 255 };
 
+    DrawTriangle3D(leftTop, noseTop, rightTop, colorNeon);
+    DrawTriangle3D(leftBot, rightBot, noseBot, colorNeon);
+
+    DrawTriangle3D(leftTop, leftBot, noseTop, colorNeon);
+    DrawTriangle3D(leftBot, noseBot, noseTop, colorNeon);
+
+    DrawTriangle3D(rightTop, noseTop, rightBot, colorNeon);
+    DrawTriangle3D(rightBot, noseBot, noseTop, colorNeon);
+
+    DrawTriangle3D(leftTop, rightTop, rightBot, colorNeon);
+    DrawTriangle3D(leftTop, rightBot, leftBot, colorNeon);
+}
+
+void Avion::Dibujar() {
+
     rlPushMatrix();
         rlTranslatef(posicion.x, posicion.y, posicion.z);
         rlRotatef(rotacionY, 0,1,0);
@@ -343,17 +372,16 @@ void Avion::Dibujar() {
             rlRotatef(anguloBanco, 0,0,1);  
         }
 
-        DrawTriangle3D(leftTop, noseTop, rightTop, colorNeon);
-        DrawTriangle3D(leftBot, rightBot, noseBot, colorNeon);
-
-        DrawTriangle3D(leftTop, leftBot, noseTop, colorNeon);
-        DrawTriangle3D(leftBot, noseBot, noseTop, colorNeon);
-
-        DrawTriangle3D(rightTop, noseTop, rightBot, colorNeon);
-        DrawTriangle3D(rightBot, noseBot, noseTop, colorNeon);
-
-        DrawTriangle3D(leftTop, rightTop, rightBot, colorNeon);
-        DrawTriangle3D(leftTop, rightBot, leftBot, colorNeon);
+        if (modeloCargado) {
+            DrawModel(
+                    modelo,
+                    {0.0f, 0.0f, 0.0f},
+                    ESCALA_MODELO_AVION * escala,
+                    WHITE
+                    );
+        } else {
+            DibujarGeometriaProcedural();
+        }
     rlPopMatrix();
 
     for (int i = 0; i < MAX_TRAIL - 1; i++) {

@@ -1,0 +1,7 @@
+Spaceship 3D model
+
+Title: Spaceship
+Creator: Liz Reddington
+Source: https://poly.pizza/m/5nWeu4IQXVX
+License: Creative Commons Attribution (CC BY)
+Modifications: Renamed and adapted for use in RetroB.

@@ -39,6 +39,9 @@ private:
     Saturno* planetaActual;
     float escala;
 
+    Model modelo{};
+    bool modeloCargado = false;
+
     Vector2 miraPos;          
     float   miraTiempoSoft;   
     float   miraTiempoHard;   
@@ -68,10 +71,14 @@ private:
     void ActualizarVueloLibre(float dt);
     void ActualizarOrbital(float dt);
     void ActualizarBoost(float dt);
+    void DibujarGeometriaProcedural() const;
     void DibujarLineasDeVelocidad() const;
 
 public:
     Avion();
+    ~Avion();
+    Avion(const Avion&) = delete;
+    Avion& operator=(const Avion&) = delete;
     void Actualizar(float dt, Vector3 objetivoPos, bool objetivoExiste);
     void Dibujar();
     Vector3 GetPosicion() const;
