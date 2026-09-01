@@ -121,6 +121,18 @@ bool Cargar(const std::string& ruta, LevelData& out) {
             if (!tgts.empty()) o.targetIds = Split(tgts, ',');
             out.objetivos.push_back(o);
         }
+        else if (cmd == "PORTAL") {
+            PortalSpawn p;
+            p.posicion = { GetF(t,"x"), GetF(t,"y"), GetF(t,"z") };
+            p.radius   = GetF(t, "radius", 5.0f);
+            out.portales.push_back(p);
+        }
+        else if (cmd == "PLANET") {
+            PlanetSpawn p;
+            p.posicion = { GetF(t,"x"), GetF(t,"y"), GetF(t,"z") };
+            p.radius   = GetF(t, "radius", 20.0f);
+            out.planetas.push_back(p);
+        }
     }
     return true;
 }
@@ -176,6 +188,16 @@ bool Guardar(const std::string& ruta, const LevelData& lvl) {
         if (o.tipo == "sobrevivir")
             f << " duration=" << o.duration;
         f << " desc=\"" << o.descripcion << "\"\n";
+    }
+
+    for (const auto& p : lvl.portales) {
+        f << "\nPORTAL x=" << p.posicion.x << " y=" << p.posicion.y << " z=" << p.posicion.z
+          << " radius=" << p.radius << "\n";
+    }
+
+    for (const auto& p : lvl.planetas) {
+        f << "\nPLANET x=" << p.posicion.x << " y=" << p.posicion.y << " z=" << p.posicion.z
+          << " radius=" << p.radius << "\n";
     }
 
     return true;
