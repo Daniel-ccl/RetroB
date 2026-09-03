@@ -373,6 +373,7 @@ int main() {
                     }
                 } else if (planetaActualIdx >= 0 && planetaActualIdx < (int)portalesRetornoNivel.size()) {
                     if (portalesRetornoNivel[planetaActualIdx].DetectarEntrada(posAvionNivel)) {
+                        portalesNivel[planetaActualIdx].BloquearHastaSalir();
                         avion.SetPosicion(portalesNivel[planetaActualIdx].GetPosicion());
                         avion.SetPlanetaActual(nullptr);
                         avion.SetEscala(1.0f);

@@ -21,6 +21,7 @@ private:
     Color colorAnillo;
     std::vector<Particula> particulas;
     float cooldown;        
+    bool bloqueadoHastaSalir = false;
 
     void GenerarParticulas(int cantidad);
 
@@ -28,6 +29,7 @@ public:
     Portal(Vector3 pos, float radio, Color color);
 
     bool DetectarEntrada(Vector3 posAvion); 
+    void BloquearHastaSalir() { bloqueadoHastaSalir = true; }
     void Actualizar(float dt);
     void Dibujar() const;
 

@@ -47,18 +47,21 @@ void Portal::GenerarParticulas(int cantidad) {
 }
 
 bool Portal::DetectarEntrada(Vector3 posAvion) {
-    if (cooldown > 0.0f) return false;
-
     float dx = posAvion.x - posicion.x;
     float dy = posAvion.y - posicion.y;
     float dz = posAvion.z - posicion.z;
     float dist2 = dx*dx + dy*dy + dz*dz;
+    bool dentroDelPortal = dist2 <= radio*radio;
 
-    if (dist2 <= (radio * radio)) {
-        cooldown = 10.0f; 
-        return true;
+    if (bloqueadoHastaSalir) {
+        if (dentroDelPortal) return false;
+        bloqueadoHastaSalir = false;
     }
-    return false;
+
+    if (cooldown > 0.0f || !dentroDelPortal) return false;
+
+    cooldown = 10.0f;
+    return true;
 }
 
 void Portal::Actualizar(float dt) {
