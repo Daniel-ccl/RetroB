@@ -23,7 +23,6 @@ set(FUENTES_RETROB
     editor.cpp
     escarabajo.cpp
     hud.cpp
-    level_io.cpp
     mapa.cpp
     notificaciones.cpp
     parche_flores.cpp
@@ -44,16 +43,30 @@ set(FUENTES_RETROB
 
 set(FUENTES_EDITOR_NIVELES
     Levels_editor/main.cpp
-    Levels_editor/level_io.cpp
     Levels_editor/ui_textbox.cpp
     ui.cpp
+)
+
+
+add_library(RetroBLevels STATIC
+    shared/levels/level_io.cpp
+)
+
+target_compile_features(RetroBLevels PUBLIC cxx_std_17)
+
+target_include_directories(RetroBLevels PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/shared"
+)
+
+target_link_libraries(RetroBLevels PUBLIC
+    PkgConfig::RAYLIB
 )
 
 add_executable(RetroB ${FUENTES_RETROB})
 
 target_compile_features(RetroB PRIVATE cxx_std_17)
 target_include_directories(RetroB PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(RetroB PRIVATE PkgConfig::RAYLIB)
+target_link_libraries(RetroB PRIVATE PkgConfig::RAYLIB RetroBLevels)
 
 set_target_properties(RetroB PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${DIRECTORIO_EJECUCION_JUEGO}"
@@ -66,7 +79,7 @@ target_include_directories(EditorNiveles PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/Levels_editor"
 )
-target_link_libraries(EditorNiveles PRIVATE PkgConfig::RAYLIB)
+target_link_libraries(EditorNiveles PRIVATE PkgConfig::RAYLIB RetroBLevels)
 
 set_target_properties(EditorNiveles PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${DIRECTORIO_EJECUCION_EDITOR}"

@@ -1,6 +1,6 @@
+#include "levels/level_data.h"
+#include "levels/level_io.h"
 #include "raylib.h"
-#include "level_data.h"
-#include "level_io.h"
 #include "ui_textbox.h"
 #include <vector>
 #include <string>
